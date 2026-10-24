@@ -1,0 +1,8 @@
+# T1-multi (spec 15.6): requests sent together from threads (one group at a time), PARALLEL=2: slot 1 and
+# extents past 0; compare with --tokens-only and --by-position (rounds group the streams by arrival).
+{"id": "m300", "rand_len": 300, "seed": 2300, "max_tokens": 64, "group": "a"}
+{"id": "m17", "rand_len": 17, "seed": 2017, "max_tokens": 96, "group": "a"}
+{"id": "m2049", "rand_len": 2049, "seed": 4049, "max_tokens": 48, "group": "a"}
+{"id": "m129", "rand_len": 129, "seed": 2129, "max_tokens": 64, "group": "a"}
+{"id": "n5", "rand_len": 5, "seed": 2005, "max_tokens": 64, "group": "b"}
+{"id": "n4500", "rand_len": 4500, "seed": 6500, "max_tokens": 48, "group": "b"}

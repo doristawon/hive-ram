@@ -1,0 +1,21 @@
+# tfpp-glm bench / equivalence prompt set (spec 13.6). Images and response_format: T1-http (run_truncated.sh).
+# A second pass with TF_GLM_CACHE_GIB=0.5 on the leader tests the kept-prompt budget under pressure (run_truncated.sh T1-kept: replies only, compare --tokens-only; a byte cap evicts differently at each cut).
+{"id": "zh-short", "text": "請用繁體中文寫一段約 150 字的短文，描述颱風夜在台北公寓裡停電的情景。", "max_tokens": 96}
+{"id": "code", "text": "Write a Python function that parses an ISO 8601 duration like 'P3DT4H5M' into seconds.", "max_tokens": 96}
+{"id": "long-6k", "text": "颱風夜裡，台北老公寓的電燈閃了兩下就熄了，樓梯間傳來鄰居找手電筒的聲音。窗外的雨一陣緊過一陣，", "text_repeat": 150, "max_tokens": 64}
+{"id": "chat-a1", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "什麼是管線平行？"}], "max_tokens": 48}
+{"id": "chat-b1", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "USB4 的頻寬大約多少？"}], "max_tokens": 48}
+{"id": "chat-a2", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "什麼是管線平行？"}, {"role": "assistant", "content": "管線平行是把模型依層切成幾段，每段放在不同的裝置上。"}, {"role": "user", "content": "那它和張量平行差在哪裡？"}], "max_tokens": 48}
+{"id": "chat-b2", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "USB4 的頻寬大約多少？"}, {"role": "assistant", "content": "USB4 最高 40 Gbit/s。"}, {"role": "user", "content": "實際跑 TCP 大概多少？"}], "max_tokens": 48}
+{"id": "chat-a3", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "什麼是管線平行？"}, {"role": "assistant", "content": "管線平行是把模型依層切成幾段，每段放在不同的裝置上。"}, {"role": "user", "content": "那它和張量平行差在哪裡？"}, {"role": "assistant", "content": "張量平行把每一層切開，每層都要交換資料。"}, {"role": "user", "content": "所以延遲比較重要？"}], "max_tokens": 48}
+{"id": "chat-a3-resend", "system": "你是一個嚴謹的助理，回答時先列出前提，再逐步推理，最後給出結論。遇到不確定的資訊要明說。 ", "system_repeat": 12, "messages": [{"role": "user", "content": "什麼是管線平行？"}, {"role": "assistant", "content": "管線平行是把模型依層切成幾段，每段放在不同的裝置上。"}, {"role": "user", "content": "那它和張量平行差在哪裡？"}, {"role": "assistant", "content": "張量平行把每一層切開，每層都要交換資料。"}, {"role": "user", "content": "所以延遲比較重要？"}], "max_tokens": 48}
+{"id": "copy", "text": "Repeat this paragraph exactly, three times: The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. ", "max_tokens": 160}
+{"id": "sampled", "text": "說一個關於筆電散熱的笑話。", "temperature": 0.8, "top_k": 20, "top_p": 0.95, "seed": 1234, "max_tokens": 64}
+{"id": "zh-short-serial", "text": "請用繁體中文寫一段約 150 字的短文，描述颱風夜在台北公寓裡停電的情景。", "max_tokens": 96, "draft": false}
+{"id": "copy-serial", "text": "Repeat this paragraph exactly, three times: The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. The quick brown fox jumps over the lazy dog while the five boxing wizards jump quickly. ", "max_tokens": 160, "draft": false}
+{"id": "sampled-serial", "text": "說一個關於筆電散熱的笑話。", "temperature": 0.8, "top_k": 20, "top_p": 0.95, "seed": 1234, "max_tokens": 64, "draft": false}
+{"id": "policy-fnc7", "text": "列出三個台灣的國家公園。", "policy": "fnc7:0.3", "max_tokens": 64}
+{"id": "policy-c3", "text": "列出三個台灣的國家公園。", "policy": "c3:0.35", "max_tokens": 64}
+{"id": "policy-0", "text": "列出三個台灣的國家公園。", "policy": "0", "max_tokens": 64}
+{"id": "stop-after-5", "text": "從 1 數到 100。", "stop_after": 5, "max_tokens": 200}
+{"id": "one-token", "text": "Reply with OK.", "max_tokens": 1}

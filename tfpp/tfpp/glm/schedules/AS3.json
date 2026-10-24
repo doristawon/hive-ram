@@ -1,0 +1,3 @@
+{"name": "AS3", "mode": "lockstep", "prompts": "bench_prompts.jsonl", "arrivals": 0,
+ "suggest": {"pool_rows": 6144},
+ "note": "AS1 on a small pool (POOL_ROWS=6144): admissions wait for room, extents are evicted, moved and grown"}

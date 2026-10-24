@@ -1,0 +1,2 @@
+{"name": "AS5", "mode": "lockstep", "prompts": "bench_prompts.jsonl", "only": ["code"], "arrivals": 0,
+ "note": "one stream alone (LONE is off: it takes the batched window like any other)"}

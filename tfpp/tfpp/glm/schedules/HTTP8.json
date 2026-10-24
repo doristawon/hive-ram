@@ -1,0 +1,2 @@
+{"name": "HTTP8", "mode": "free", "prompts": "bench_prompts.jsonl", "concurrency": 8, "stagger_ms": 50, "rounds": 1,
+ "note": "for the HTTP client: python -m tfpp.glm.v2bench http --concurrency 8 (v2bench takes the knobs from its own flags)"}

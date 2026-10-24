@@ -1,0 +1,136 @@
+{
+ "what": "tfpp-glm v1 as it ran on hardware on 2026-10-23, frozen before any v2 code (spec v2 section 1, 6)",
+ "tfpp_sha_v1": "7a8e0a2e7ef98d9d942f8280015f0e1b4d241160dedc1d0b4af019d0b5ebd3a0",
+ "unchanged": {
+  "__init__.py": "153dddeff543e386b8fcbaa2e6253914c3f1afb5e69e2f26d45790d9fcacda58",
+  "bench.py": "cb611151cd8f6991d4fbc63a8c22e314bce5c4bfbbcd6d6fd9313c0af4a11be5",
+  "capacity.py": "7777ece2a186075446de7a3ac17fd84a496ac5d0a612c44176da6e8fc9f2c512",
+  "compare.py": "412a017cf2930bd9ed0a7e4aaf3fb6b5b60da0c51ec240814c575629bfe2d599",
+  "env.py": "cce2df29c93149f2c3ef91702615c85813e3f0cfca55e87944ef74ff09d53f9d",
+  "feed.py": "14715bbd0d22cd7f7797cc8236b8f57e1202dd825bd070a0014e5beec52e560a",
+  "kernel_check.py": "645b0423c65c572b0224da6504f7f77def8da5afceae418fb0551a1a56ba46fe",
+  "load.py": "8ff8505897ef9ef97eb5228b4b77dc18644434f690a7af7eb2e8b5bfd44cb109",
+  "part.py": "c1611437abf28279dd1bae4376b04984acbd060f607bc0f28214519749355ce1",
+  "pins.py": "94cd5e4e69bd69b85c1d16868f0073777ee7bea75f8ac49b7eb431a450713943",
+  "proto.py": "804369bd920dd424fc27855a711e4fd06666505b0bee5eed6e7fbe6278f763fb",
+  "run.py": "86e241d4985cfa9c71b3325cd1e7066719fde412aef56433be7db03aea030639",
+  "startup.py": "5e6caa797b3d05319a63e95dd6e513cfdd32d50d8eab8dd2034b67deba904fc9",
+  "tail.py": "95b0a30128dc5be4a7ddd69617cd75706e72347b31b3451367fbc299ae86f79a",
+  "trace.py": "240f62091d9c1453bb2c3b8e8f7515b8e5dd0c673ba89cbdf3fe2a69c52feac0",
+  "wire.py": "8079e391d8570606b23099b538ae7f58086cdc941c7611459931d21e59f9cab7",
+  "bench_prompts.jsonl": "3310a823dd180d370816d796dc25300cfb1ae129aa560424b930188ed6bcac4b",
+  "tests/test_static.py": "f3cd7cfcd78fe8b5678181fd5626fd911e9795323152a69fa75b08991725dfb1"
+ },
+ "warm_py": "a53394add6cdcff5519d7df9ad0fb6ef750fff26a5629f9e7a419765f66ecef6",
+ "whitelisted": {
+  "serve.py": {
+   "v1_sha256": "0e5d9ea9b0f0aa94eb39c5d18b1592f85aec638bd20553ccf7b3f3f4f4b3ec52",
+   "frozen": "tests/data/v1_frozen/serve.py"
+  },
+  "follower.py": {
+   "v1_sha256": "cffacbf5cd5edad23a511a084f70caeaf7a3c169e7ec0a1af7f9e82c878cf86b",
+   "frozen": "tests/data/v1_frozen/follower.py"
+  }
+ },
+ "whitelist_sha256": "03826e160f8645518ad1e3ea31cdc7e402b4ef3616ca15f3a0a093aa37ba78b6",
+ "scripts_unchanged": {
+  "run_truncated.sh": "a8a8eaf7db9056fa6ff15300dc854178d06c1b3b0c754082f5e3ed48550bd43b",
+  "cluster.env": "f0a0f525f327e357ae5243e2833fe583dd1ec681dde5227ff0379f221b819e27"
+ },
+ "scripts_additive": {
+  "start_stage.sh": "f75165d941cd343eb98c8d1e6b22aca89b95ca3144fd515ce4a22887ec667552"
+ },
+ "post_v1": {
+  "what": "v1 files changed after the 2026-10-23 hardware runs, for documented defect fixes and publish hygiene (IMPLEMENTATION_NOTES.md, 'After the hardware runs'; CPU-tested, not yet re-run on hardware). The hardware hashes above stay as they were; each entry pins the file as it is now.",
+  "glm": {
+   "wire.py": {
+    "sha256": "f9fdf3f7b71be71440dc627b6b07214e3679df96bbb191fe456a52c36221bd1d",
+    "changes": [
+     "Link.accept_linked: the listener stays open until a connection exchanges LINK; strays (probes, silent or non-LINK clients, a peer that closed after its LINK) are dropped, each connection has 5 s for its LINK; a LINK of another protocol version is a ProtocolError at once",
+     "recv(link_frame=True): a first-frame header over 64 KiB or with parts is a ProtocolError (not a tfpp-glm peer: connect_down refuses it instead of retrying until its deadline)"
+    ]
+   },
+   "startup.py": {
+    "sha256": "8748fc7dfd9416e1202cdc47d3f462deb51d0852926f8d8546a201796f87932c",
+    "changes": [
+     "leader_listen / follower_connect use Link.accept_linked (a stray connection can no longer take the link)",
+     "forward_or_fail raises LinkError instead of sys.exit(75): follower.run returns 75 and serve's os._exit skips the interpreter teardown",
+     "connect_down's docstring names what is refused at once"
+    ]
+   },
+   "proto.py": {
+    "sha256": "eb5460b0f17537b809869a95d276873cecf9c1b0f106ab38cad87078bf7dea8e",
+    "changes": [
+     "check_chain also requires a KDA layer in every stage (one graph parity against two: BUILT would refuse it only after every weight is loaded)"
+    ]
+   },
+   "tail.py": {
+    "sha256": "ef36b2d3287a4cf0199f9b234b2024b10ab709187281efc4b53971a7901b1622",
+    "changes": [
+     "the prefill seam's failure is fatal only with chunks in flight or a link error; an error after every chunk was read (first-token sampling, grammar) goes through _run's END abort"
+    ]
+   },
+   "compare.py": {
+    "sha256": "0f5c1a19889b93cc54a6ff44fa83f4a724c0f02d7531e7f588140976beddaed6",
+    "changes": [
+     "exit 1 when neither trace holds a request, and for a request both runs left without a done or fail record (INCOMPLETE)"
+    ]
+   },
+   "load.py": {
+    "sha256": "f7e6f57374f82d3f0def7c2d422f3bc3be67e2454af6441011bb40710e475b55",
+    "changes": [
+     "mine(): an MLX checkpoint's embed_tokens.scales / .biases belong with embed_tokens.weight",
+     "comments reworded (no code change)"
+    ]
+   },
+   "capacity.py": {
+    "sha256": "446bd8e943f005586fece0eb9fd92ba64f66d2e9d7d3b0aef550df64601b4b15",
+    "changes": [
+     "agree(): a refused window names each stage's budget, its need at the requested window, the window it fits and the least one (fit_table)"
+    ]
+   },
+   "env.py": {
+    "sha256": "3df61695f7b10fb2aa7a6579e5bf3b386016c18c202769009fc11ad8cd9e03a2",
+    "changes": [
+     "a runtime message reworded"
+    ]
+   },
+   "pins.py": {
+    "sha256": "3be0f45cbabba6012a4836a067b219d1046a9b90adf46e8f1c350990fb9a0bab",
+    "changes": [
+     "a comment reworded"
+    ]
+   }
+  },
+  "scripts": {
+   "run_truncated.sh": {
+    "sha256": "4e3f19ad2dbb307f97eb1efd039112035291ad29309c82e76814ad00f5477ee3",
+    "changes": [
+     "header comment reworded"
+    ]
+   },
+   "cluster.env": {
+    "sha256": "86c93b4c37fb173238b7b86faceec7dd640a7e22e35d107fa919598d9cdd57e9",
+    "changes": [
+     "comments only (no KEY=value changed): points to MIA's published scripts/config.sh; a warning that HTTP_HOST=0.0.0.0 serves the API unauthenticated on every interface"
+    ]
+   }
+  },
+  "frozen": {
+   "serve.py": {
+    "sha256": "dacd7144780b8a616cb4d20da87c654442d22c913ddba1791387e0d732b18dcd",
+    "changes": [
+     "two --help strings reworded; no code change"
+    ]
+   },
+   "start_stage.sh": {
+    "sha256": "e798d81f0c7e0671023837c80b956dbfdfee3b74357fdd480590d4a164f74af2",
+    "changes": [
+     "the same non-v2 changes as the live start_stage.sh: the CUDA-12 extension probe tolerates a missing extensions folder (it ended the script silently under set -euo pipefail)",
+     "the pid file is trusted only while its pid runs tfpp.glm.serve --role ROLE (is_stage / stage_pid); a stale one is removed",
+     "the GPU-server port guard reads GPU_GUARD_PORTS from node.env (default none); messages and comments reworded"
+    ]
+   }
+  }
+ }
+}

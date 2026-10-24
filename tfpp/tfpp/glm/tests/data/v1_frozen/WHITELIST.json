@@ -1,0 +1,52 @@
+[
+ {
+  "file": "serve.py",
+  "id": "S1",
+  "source": "ap.add_argument(\"--pool-rows\", type=int, default=None, help=\"v2 tests: the pool's tokens on every stage\")"
+ },
+ {
+  "file": "serve.py",
+  "id": "S2",
+  "source": "ap.add_argument(\"--kept-entries\", type=int, default=None, help=\"v2 tests: kept prompt states\")"
+ },
+ {
+  "file": "serve.py",
+  "id": "S3",
+  "source": "ap.add_argument(\"--mbench\", default=\"\", help=\"v2: a lockstep or free schedule (JSON) instead of HTTP\")"
+ },
+ {
+  "file": "serve.py",
+  "id": "S4",
+  "source": "if a.pool_rows is not None or a.kept_entries is not None or a.mbench:\n    raise SystemExit(\"--pool-rows / --kept-entries / --mbench are the leader's (v2)\")"
+ },
+ {
+  "file": "serve.py",
+  "id": "S5",
+  "source": "if a.parallel > 1:\n    from .v2serve import check_args_v2\n    return check_args_v2(a)"
+ },
+ {
+  "file": "serve.py",
+  "id": "S6",
+  "source": "if a.pool_rows is not None or a.kept_entries is not None or a.mbench:\n    raise SystemExit(\"--pool-rows / --kept-entries / --mbench need --parallel 2..8 (v2)\")"
+ },
+ {
+  "file": "serve.py",
+  "id": "S7",
+  "source": "if a.parallel > 1:\n    from .v2serve import leader_v2\n    return leader_v2(a)"
+ },
+ {
+  "file": "follower.py",
+  "id": "F1",
+  "source": "v2 = None"
+ },
+ {
+  "file": "follower.py",
+  "id": "F2",
+  "source": "if int(go[\"P\"]) > 1:\n    from . import v2follower\n    self.v2 = v2follower.start(self, go, prompt_precision, KeepWarm)\n    return"
+ },
+ {
+  "file": "follower.py",
+  "id": "F3",
+  "source": "if self.v2 is not None:\n    return self.v2.run()"
+ }
+]

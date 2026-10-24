@@ -1,0 +1,54 @@
+# Third-party engine trees (fetched at pinned versions, see THIRD_PARTY.md). Never commit them.
+vendor/
+
+# Per-node settings: copy node.env.example to node.env next to it. It can hold secrets (TF_API_KEY_FILE, TFPP_SECRET).
+node.env
+*.env.local
+.env
+
+# Keys, tokens and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+api_key
+auth.json
+
+# Model weights, drafters and converted checkpoints (each keeps its own licence; never redistribute them here)
+models/
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Run output: logs, traces, benchmark results
+*.log
+*.log.gz
+*.tsv
+*.trace.jsonl
+bench-out*/
+tfpp-glm-tests/
+tfpp-ds41-tests/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,24 @@
+# tfpp-ds41 stage as a user unit (inside WSL): systemctl --user enable --now tfpp-ds41@main
+#   cp tfpp-ds41@.service ~/.config/systemd/user/ && systemctl --user daemon-reload
+# %i names a config folder under ~/tfpp-ds41-conf/ (cluster.env, node.env, toolchain.sh).
+# Edit me: the paths below assume the checkout at ~/hive-ram (%h = the user's home); change them to where yours
+# is before copying the unit.
+# Restart=no: a broken chain (exit 75) restarts whole and in any order, never one stage alone (spec 8.4).
+# Two stages on one node (two instances) each keep their own pid / log folder (start_stage.sh: <role>-<A>-<B>).
+[Unit]
+Description=tfpp-ds41 pipeline stage (%i)
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=TFPP_DS41_CONF=%h/tfpp-ds41-conf/%i
+ExecStart=%h/hive-ram/tfpp/scripts/ds41/start_stage.sh --foreground
+ExecStop=%h/hive-ram/tfpp/scripts/ds41/stop_stage.sh
+Restart=no
+LimitSTACK=67108864
+TimeoutStartSec=3600
+TimeoutStopSec=60
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,64 @@
+hive-ram
+Copyright 2026 hive-ram contributors
+
+hive-ram's own code, scripts and documentation are licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This repository contains no third-party source trees, binaries or model weights. The engines tfpp runs on are
+fetched by the user at pinned versions (THIRD_PARTY.md). Part of tfpp is adapted from the source of those engines;
+the notices below go with it. THIRD_PARTY_NOTICES.md has the full list of adapted files, the model licences and the
+MIT license texts referred to here.
+
+-----------------------------------------------------------------------------------------------------------------------
+TensorFold
+  https://github.com/ashhart/TensorFold
+  TensorFold's NOTICE reads:
+
+    TensorFold
+    Copyright 2026 TensorFold contributors
+    https://github.com/ashhart/TensorFold
+
+    TensorFold is licensed under the Apache License, Version 2.0 (LICENSE) from 0.6.0.
+    Releases up to 0.5.0 were MIT-licensed, and code written before 0.6.0 keeps its
+    MIT notice in LICENSES/MIT.txt. Third-party code and its licenses are listed in
+    THIRD_PARTY_NOTICES.md.
+
+  tfpp/tfpp/load.py, part.py and driver.py (Flash Next, TensorFold 0.6.1), most of tfpp/tfpp/glm/ (TensorFold v0.6.0
+  with the MIA patches) and most of tfpp/tfpp/ds41/ (the fork below) contain code adapted from TensorFold, modified by
+  the hive-ram contributors: functions cut at a layer range, classes that follow TensorFold's engine constructors
+  step by step, and loaders that compile a copy of an installed TensorFold module's source with a few anchored lines
+  replaced. TensorFold's MIT notice for code written before 0.6.0 (Copyright (c) 2026 TensorFold contributors) is
+  reproduced in THIRD_PARTY_NOTICES.md.
+
+GLM-5.3-Flash EXL3 on 2x DGX Spark with TensorFold (the "MIA recipe")
+  https://github.com/MiaAI-Lab/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold
+  Copyright 2026 MiaAI-Lab. Apache License, Version 2.0.
+  tfpp-glm (tfpp/tfpp/glm/) runs on TensorFold v0.6.0 with this project's 107 patches applied and adapts functions of
+  the patched package. That project's NOTICE credits third-party work inside its patches (glm53-tensorfold-spark,
+  Copyright 2026 Jay Leaton, Apache-2.0; a spill tier for kept prompt states by Robert Wojciechowski; b12x, Apache-2.0;
+  and contributions through its issues and pull requests); THIRD_PARTY_NOTICES.md lists them.
+
+TensorFold fork with the deepseek_v41 family
+  https://github.com/bertholomus/TensorFold (branch deepseek-v41-tp2)
+  A fork of TensorFold 0.6.6 by BertholomusAI (Albert Lee, https://github.com/bertholomus), Copyright 2026.
+  Apache License, Version 2.0. Its model math is re-implemented from DeepSeek's inference code for
+  DeepSeek-V4.1-Flash (MIT License, Copyright (c) 2023 DeepSeek).
+  tfpp-ds41 (tfpp/tfpp/ds41/) adapts functions of this fork.
+
+ExLlamaV3
+  https://github.com/turboderp-org/exllamav3
+  MIT License, Copyright (c) 2025 Turboderp. The EXL3 format of the GLM and DeepSeek checkpoints; read by the engines
+  above, not included here.
+
+llama.cpp / ggml
+  https://github.com/ggml-org/llama.cpp
+  MIT License, Copyright (c) the ggml authors. Used as a separate program (llama-server and the RPC server) for the
+  llama.cpp baseline; not included, not linked.
+
+Model weights are not part of this repository and each checkpoint keeps its own licence. The optional DFlash2
+drafter for GLM-5.3-Flash, incoai/GLM-5.3-Flash-DFlash2, is licensed CC BY-NC-ND 4.0 (non-commercial use only, no
+derivatives): do not redistribute it or any converted or quantized version of it. tfpp-glm runs without it
+(NO_DRAFTS=1).
+
+NVIDIA, N1X, DGX Spark, GB10, Thunderbolt, USB4, DeepSeek, Qwen and GLM are trademarks of their owners and
+are used only to describe hardware and models. hive-ram is not affiliated with or endorsed by any of them, nor by the
+authors of the projects above.

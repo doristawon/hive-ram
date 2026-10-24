@@ -1,0 +1,22 @@
+# tfpp-glm stage as a user unit (inside WSL): systemctl --user enable --now tfpp-glm@main
+#   cp tfpp-glm@.service ~/.config/systemd/user/ && systemctl --user daemon-reload
+# %i names a config folder under ~/tfpp-glm-conf/ (cluster.env, node.env, toolchain.sh). The paths below assume the
+# repository is checked out at ~/hive-ram: change them to where yours is.
+# Restart=no: a broken chain (exit 75) restarts whole and in order, never one stage alone (spec 8.7).
+[Unit]
+Description=tfpp-glm pipeline stage (%i)
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=TFPP_GLM_CONF=%h/tfpp-glm-conf/%i
+ExecStart=%h/hive-ram/tfpp/scripts/glm/start_stage.sh --foreground
+ExecStop=%h/hive-ram/tfpp/scripts/glm/stop_stage.sh
+Restart=no
+LimitSTACK=67108864
+TimeoutStartSec=3600
+TimeoutStopSec=60
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=default.target

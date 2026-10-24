@@ -1,0 +1,7 @@
+{
+  "_note": "A stand-in with only the four fields tfpp.glm.v2capacity.draft_window_extra reads, set to the values of incoai/GLM-5.3-Flash-DFlash2 (revision bf582e4e): 5 sliding-window layers, 8 KV heads of 128, a 2,048-row window. The drafter's own config is not copied here (CC BY-NC-ND 4.0).",
+  "head_dim": 128,
+  "num_hidden_layers": 5,
+  "num_key_value_heads": 8,
+  "sliding_window": 2048
+}

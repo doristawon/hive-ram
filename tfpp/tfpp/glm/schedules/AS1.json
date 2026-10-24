@@ -1,0 +1,2 @@
+{"name": "AS1", "mode": "lockstep", "prompts": "bench_prompts.jsonl", "arrivals": 0,
+ "note": "all 19 prompts of the bench set arrive at iteration 0 (P=4: four are admitted, the rest wait for a slot)"}

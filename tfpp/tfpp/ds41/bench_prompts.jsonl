@@ -1,0 +1,30 @@
+# tfpp-ds41 equivalence prompt set (spec 15.6): fixed-seed token ids at the chunk and window boundaries, two text
+# prompts (thinking on / off), a client stop, a repeat, one sampled request. CONTEXT=8192 (run_shortened.sh).
+# r2050 / r2064 / r4098 / r4112 (after r6000, so the slot's ring still holds an earlier request's keys): the last chunk is 2..16
+# rows and its window reaches below the replay floor, the one case where TF_DS_REPLAY_FLOOR picks the gather path over the ring (F/model.py:37-41).
+# ignore_eos (the bench's default) so a shortened model's early end tokens do not cut the replies short.
+{"id": "r1", "rand_len": 1, "seed": 1001, "max_tokens": 64}
+{"id": "r5", "rand_len": 5, "seed": 1005, "max_tokens": 64}
+{"id": "r16", "rand_len": 16, "seed": 1016, "max_tokens": 48}
+{"id": "r17", "rand_len": 17, "seed": 1017, "max_tokens": 96}
+{"id": "r127", "rand_len": 127, "seed": 1127, "max_tokens": 48}
+{"id": "r128", "rand_len": 128, "seed": 1128, "max_tokens": 64}
+{"id": "r129", "rand_len": 129, "seed": 1129, "max_tokens": 64}
+{"id": "r131", "rand_len": 131, "seed": 1131, "max_tokens": 48}
+{"id": "r300", "rand_len": 300, "seed": 1300, "max_tokens": 96}
+{"id": "r2047", "rand_len": 2047, "seed": 3047, "max_tokens": 48}
+{"id": "r2048", "rand_len": 2048, "seed": 3048, "max_tokens": 64}
+{"id": "r2049", "rand_len": 2049, "seed": 3049, "max_tokens": 48}
+{"id": "r2113", "rand_len": 2113, "seed": 3113, "max_tokens": 64}
+{"id": "r4200", "rand_len": 4200, "seed": 5200, "max_tokens": 48}
+{"id": "r4500", "rand_len": 4500, "seed": 5500, "max_tokens": 64}
+{"id": "r6000", "rand_len": 6000, "seed": 7000, "max_tokens": 48}
+{"id": "r2050", "rand_len": 2050, "seed": 3050, "max_tokens": 48}
+{"id": "r2064", "rand_len": 2064, "seed": 3064, "max_tokens": 48}
+{"id": "r4098", "rand_len": 4098, "seed": 5098, "max_tokens": 48}
+{"id": "r4112", "rand_len": 4112, "seed": 5112, "max_tokens": 48}
+{"id": "text-plain", "text": "請用三句話說明管線平行（pipeline parallelism）與張量平行的差別。", "thinking": false, "max_tokens": 64}
+{"id": "text-think", "text": "Explain in two sentences why a verify window keeps exactly one more token than the accepted drafts.", "thinking": true, "max_tokens": 80}
+{"id": "stop", "rand_len": 200, "seed": 77, "max_tokens": 96, "stop_after": 9}
+{"id": "again", "rand_len": 517, "seed": 78, "max_tokens": 48, "repeat": 2}
+{"id": "sampled", "rand_len": 333, "seed": 1234, "max_tokens": 64, "temperature": 1.0, "top_p": 0.95, "top_k": 20}

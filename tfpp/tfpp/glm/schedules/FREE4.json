@@ -1,0 +1,2 @@
+{"name": "FREE4", "mode": "free", "prompts": "bench_prompts.jsonl", "concurrency": 4, "stagger_ms": 50, "rounds": 2,
+ "note": "free run, 4 client(s) taking the set in turn, two passes: replies compared by token (level A), timings measured"}

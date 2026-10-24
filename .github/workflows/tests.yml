@@ -1,0 +1,52 @@
+# CPU-only checks. No GPU, no torch, no TensorFold and no model weights: the tests that need a third-party tree
+# skip themselves when it is absent (vendor/ is never part of the repository). What runs here is what any contributor
+# can run on a laptop; the hardware runs are documented separately and are not repeated by CI.
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      HF_HUB_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Repository hygiene (LF only, no third-party trees)
+        run: |
+          set -euo pipefail
+          test ! -e vendor || { echo "vendor/ must not be committed"; exit 1; }
+          if git ls-files --eol | grep -E '^i/(crlf|mixed)'; then echo "CRLF in the index"; exit 1; fi
+
+      - name: Install the package and the test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+
+      - name: Import check (no torch, no TensorFold)
+        working-directory: /tmp
+        run: |
+          python -c "import tfpp, tfpp.glm, tfpp.ds41, tfpp.glm.pins, tfpp.ds41.pins; print('tfpp', tfpp.__version__)"
+          python -m tfpp.glm.pins --help > /dev/null
+          python -m tfpp.ds41.pins --help > /dev/null
+
+      - name: tfpp-glm and tfpp-ds41 CPU tests
+        working-directory: tfpp
+        run: python -m pytest -q -p no:cacheprovider -rs tfpp/glm/tests tfpp/ds41/tests
+
+      - name: Flash-Next pipeline and link-tool CPU tests
+        working-directory: tfpp
+        run: python -m pytest -q -p no:cacheprovider -rs tests scripts/tests

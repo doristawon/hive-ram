@@ -1,0 +1,27 @@
+# Everything text is stored and checked out with LF line ends, on every platform. The shell scripts, env files and
+# Python run inside WSL/Linux, and the PowerShell scripts must stay ASCII + LF (the CPU tests check them), so a
+# Windows checkout with core.autocrlf=true must not turn them into CRLF.
+* text=auto eol=lf
+
+*.py         text eol=lf diff=python
+*.sh         text eol=lf
+*.env        text eol=lf
+*.example    text eol=lf
+*.service    text eol=lf
+*.ps1        text eol=lf
+*.md         text eol=lf diff=markdown
+*.json       text eol=lf
+*.jsonl      text eol=lf
+*.toml       text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+LICENSE      text eol=lf
+NOTICE       text eol=lf
+.gitignore   text eol=lf
+.gitattributes text eol=lf
+
+# Binary files are never converted
+*.png        binary
+*.jpg        binary
+*.gz         binary
+*.tgz        binary

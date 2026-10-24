@@ -1,0 +1,52 @@
+# hive-ram's Python package `tfpp` (the pipeline stages for Flash-Next, tfpp-glm and tfpp-ds41).
+#
+#   pip install -e .              from the repository root: makes `import tfpp`, `python -m tfpp.glm.pins` etc.
+#                                 work from any folder (the package stays at tfpp/tfpp, imports are unchanged)
+#   pip install -e ".[test]"      plus pytest and numpy for the CPU tests
+#
+# An editable install puts the folder tfpp/ on sys.path, so the scripts next to the package (tfpp_run.py, compare.py,
+# rank_bench.py) also become importable as top-level modules. To expose the package alone, add
+# --config-settings editable_mode=strict. Requires a pip that builds in isolation (the default), because the
+# licence fields below need setuptools 77 or newer. Tested: Python 3.12 (CPU tests); Python 3.11 compiles every
+# file and runs the pin tools; the hardware runs used Python 3.14.
+#
+# The package has no install-time dependencies on purpose. At run time each variant needs its own torch build and
+# its own TensorFold tree (TensorFold 0.6.1, the MIA-patched v0.6.0 package, or the deepseek_v41 fork), installed by
+# the toolchain scripts in tfpp/scripts/*/toolchain.sh as THIRD_PARTY.md describes; pip must not pick those for you.
+# The CPU tests and the digest tools (tfpp.glm.pins, tfpp.ds41.pins) need neither torch nor TensorFold.
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hive-ram"
+version = "0.1.0"
+description = "Pool the memory of 2-4 computers linked by USB4/Thunderbolt to run one large LLM split by layer ranges"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md"]
+requires-python = ">=3.11"
+dependencies = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "numpy"]
+
+[project.urls]
+Repository = "https://github.com/doristawon/hive-ram"
+
+[tool.setuptools.packages.find]
+where = ["tfpp"]
+include = ["tfpp", "tfpp.*"]
+exclude = ["tfpp.*.tests", "tfpp.*.tests.*"]
+
+[tool.setuptools.package-data]
+"tfpp.glm" = ["*.jsonl", "schedules/*.json", "IMPLEMENTATION_NOTES.md"]
+"tfpp.ds41" = ["*.jsonl", "IMPLEMENTATION_NOTES.md"]
