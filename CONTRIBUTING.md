@@ -74,8 +74,12 @@ Some link-tool tests need Windows PowerShell or bash and skip elsewhere.
 - Never commit a third-party tree (`vendor/`), a wheel, a built extension or any model file.
 - Code adapted from TensorFold, the MIA recipe patches or the BertholomusAI fork is a modification of
   Apache-2.0 code: keep the upstream copyright, say in the file that it was modified, and add the file to the
-  table in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Nothing under the AGPL may be added, imported or
-  copied, including the AGPL-3.0 vLLM kit the fork's attribution mentions.
+  table in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+- **AGPL.** No AGPL source may be copied into this repository, and nothing outside `tfpp/vllm_plugin/` may import an AGPL
+  package or depend on one. That folder holds the MiniMax glue plugin, which imports the pack author's AGPL-3.0
+  `vllm-exl3`; it is licensed AGPL-3.0-only and has its own `LICENSE`. Write it against vllm-exl3's interface and do not
+  paste from its source. The AGPL-3.0 vLLM kit the DeepSeek fork's attribution mentions stays off limits: do not add,
+  import or copy it, and keep both AGPL packages out of every `tfpp` venv.
 - Models keep their own licences. The optional DFlash2 drafter for GLM-5.3-Flash (`incoai/GLM-5.3-Flash-DFlash2`) is
   CC BY-NC-ND 4.0: non-commercial use only and no derivatives. Do not add it, a converted or quantized copy, or its
   files to the repository, and keep every path that uses it optional (`NO_DRAFTS=1` must keep working).

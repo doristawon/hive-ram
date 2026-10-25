@@ -15,11 +15,13 @@ source. This file lists what comes from where and under which licence.
 | [ExLlamaV3](https://github.com/turboderp-org/exllamav3) | Its EXL3 weight format, read by the engines above | MIT | No |
 | [llama.cpp / ggml](https://github.com/ggml-org/llama.cpp) | Separate program for the llama.cpp RPC baseline | MIT | No |
 | [vLLM](https://github.com/vllm-project/vllm), image `vllm/vllm-openai:minimax-m31-flash` | The MiniMax recipe runs it as a separate program, unmodified, from the image you pull | Apache-2.0 | No |
-| [vllm-exl3 and exllamav3 forks](https://github.com/vcruz305/vllm-exl3) (`vcruz305`), inside that image | Run as a separate program by vLLM; hive-ram has no code that imports them | vllm-exl3: **AGPL-3.0**; exllamav3: MIT | **No** |
+| [vllm-exl3 and exllamav3 forks](https://github.com/vcruz305/vllm-exl3) (`vcruz305`), inside that image | Run by vLLM; only `tfpp/vllm_plugin/` imports vllm-exl3 | vllm-exl3: **AGPL-3.0**; exllamav3: MIT | No |
+| hive-ram's own `tfpp/vllm_plugin/` (MiniMax glue) | Imports vllm-exl3 and calls TensorFold's kernels | **AGPL-3.0-only** (because of that import) | Yes |
 | Model weights and drafters | Loaded at run time from folders you download | Each checkpoint's own (see [Models](#models)) | No |
 
-No AGPL code is added, imported or copied into this repository. The only AGPL-3.0 software the documentation involves is the
-`vllm-exl3` plugin that the MiniMax pack's author ships inside their vLLM image; you pull and run it yourself, and no file here imports it.
+No AGPL source is copied into this repository. One folder, `tfpp/vllm_plugin/`, is licensed AGPL-3.0-only because it
+imports `vllm-exl3` (the MiniMax pack author's vLLM plugin, AGPL-3.0, shipped inside their image) at run time; the rest of
+hive-ram stays Apache-2.0.
 
 
 ## TensorFold
@@ -91,8 +93,8 @@ changes; its `tools/dsv41/ATTRIBUTION.md` lists every outside source. In short:
 - **vLLM**, <https://github.com/vllm-project/vllm>, Apache-2.0. The recipe runs the `vllm/vllm-openai:minimax-m31-flash` image
   (digest in [`THIRD_PARTY.md`](THIRD_PARTY.md)) without modifying it.
 - **The pack and its plugin**, by `vcruz305`: `MiniMax-M3.1-Flash-EXL3-SAGE-2.15bpw` (the weights) and `vllm-exl3` (the vLLM
-  plugin that reads them, AGPL-3.0). hive-ram neither copies nor imports either; the recipe's glue plugin is kept out of this
-  repository for that reason ([why](docs/engines/minimax-vllm.md#the-glue-plugin-is-not-in-this-repository)).
+  plugin that reads them, AGPL-3.0). hive-ram copies neither. Its glue plugin imports `vllm_exl3` and is therefore AGPL-3.0-only
+  ([`tfpp/vllm_plugin`](tfpp/vllm_plugin), [what it does](docs/engines/minimax-vllm.md#the-glue-plugin)).
 - **TensorFold v0.6.6**, <https://github.com/ashhart/TensorFold>, Apache-2.0. `tfpp/scripts/minimax/prepare_tensorfold.sh` copies
   twelve of its `cuda/exl3` files out of your own checkout at the pinned tag and applies
   `tfpp/scripts/minimax/patches/0001-exl3-experts-swiglu-oai.patch` (50 lines, a modification of `experts.cu` and

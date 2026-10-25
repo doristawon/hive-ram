@@ -1,7 +1,8 @@
 hive-ram
 Copyright 2026 hive-ram contributors
 
-hive-ram's own code, scripts and documentation are licensed under the Apache License, Version 2.0 (see LICENSE).
+hive-ram's own code, scripts and documentation are licensed under the Apache License, Version 2.0 (see LICENSE), with
+one exception: tfpp/vllm_plugin/ is licensed AGPL-3.0-only (its own LICENSE), because it imports an AGPL-3.0 package.
 
 This repository contains no third-party source trees, binaries or model weights. The engines tfpp runs on are
 fetched by the user at pinned versions (THIRD_PARTY.md). Part of tfpp is adapted from the source of those engines;

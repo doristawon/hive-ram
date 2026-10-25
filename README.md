@@ -15,7 +15,7 @@ hive-ram is not a new inference engine. It sits on top of existing engines:
   variant per model family: Qwen3.8-Flash-Next (`tfpp`), GLM-5.3-Flash (`tfpp-glm`) and DeepSeek-V4.1-Flash
   (`tfpp-ds41`).
 - **vLLM pipeline parallelism** for MiniMax-M3.1-Flash (EXL3, 108.6 GiB), which fits the two machines only as a whole:
-  hive-ram supplies the cable-only network, the TensorFold kernel build and patch, and the launch and test scripts
+  hive-ram supplies the cable-only network, TensorFold kernels as a vLLM plugin and the launch and test scripts
   ([guide](docs/engines/minimax-vllm.md), [recipe](docs/recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md)). Verified
   on hardware: 18 tok/s plain, up to 57 tok/s with a DFlash2 drafter, a 131,072-token window with 4 streams.
 
@@ -208,7 +208,7 @@ v2.0 is modelled at about 1.5–1.7× one stream).
 | `tfpp-glm`, full model | GLM-5.3-Flash, all 45 layers | same | **NOT RUN.** The full 45-layer model needs about 160 GiB of stages and does NOT fit 128 + 64 GB. It needs a third node (planned chain 128 GB → 64 GB → 128 GB). |
 | `tfpp-glm` v2 (`PARALLEL` 2–8) | same, several streams | same | **VERIFIED ON ONE GPU (2026-10-24), 8-layer truncated model:** batched-row invariance (T0e); pure and eager against graphs on three lockstep schedules; 2-stage chains at 2 cut points x 3 schedules bit-identical, every stage applying the leader's messages; replies equal to P=1 serial under free timing at 1, 2 and 4 streams. **Not yet run across machines.** |
 | `tfpp-ds41` | DeepSeek-V4.1-Flash-1017, EXL3 EAQ 2.9 bpw | BertholomusAI's TensorFold fork (`deepseek-v41-tp2`) | **NOT RUN ON HARDWARE.** Static review only, plus its CPU tests (which pass); nothing has run on a GPU. |
-| vLLM PP=2 + TensorFold kernels | MiniMax-M3.1-Flash, complete 60 layers, EXL3 SAGE 2.15 bpw (108.6 GiB) | vLLM `minimax-m31-flash` image + vllm-exl3 (the pack author's, AGPL-3.0) + TensorFold v0.6.6 kernels | **VERIFIED ON HARDWARE (2026-10-26)**: both machines, full model: 17.8 tok/s without a draft; with the DFlash2 drafter 14–44 tok/s for one stream at a 131,072-token window (structured text fastest) and 31–36 tok/s in total for 1–3 streams; 24/24 on a verifiable task set; a needle test at 96K tokens passed. The glue plugin that calls the kernels is not published (AGPL), so the repository alone does not reproduce these numbers. ³ |
+| vLLM PP=2 + TensorFold kernels | MiniMax-M3.1-Flash, complete 60 layers, EXL3 SAGE 2.15 bpw (108.6 GiB) | vLLM `minimax-m31-flash` image + vllm-exl3 (the pack author's, AGPL-3.0) + TensorFold v0.6.6 kernels | **VERIFIED ON HARDWARE (2026-10-26)**: both machines, full model: 17.8 tok/s without a draft; with the DFlash2 drafter 14–44 tok/s for one stream at a 131,072-token window (structured text fastest) and 31–36 tok/s in total for 1–3 streams; 24/24 on a verifiable task set; a needle test at 96K tokens passed. ³ |
 
 ¹ The hardware runs used the first, unversioned wire protocol. The code has since moved to protocol
 `tfpp-flashnext/2` (link handshake, whole-chain check at start, checked frames, error frames). That version passes the
@@ -475,6 +475,7 @@ hive-ram/
 ├── start_n1x_relay.ps1         Windows, admin: removes old portproxy entries, then runs relay_user.ps1
 ├── linktest.py                 throughput and round-trip test over the real path (standard library only)
 └── tfpp/
+    ├── vllm_plugin/            MiniMax: vLLM plugins (TensorFold EXL3 kernels, pipeline-parallel fixes), AGPL-3.0-only, pip-installable
     ├── scripts/minimax/        MiniMax: n1x_tun.py (cable-only IP link), serve and launch scripts, TensorFold patch, eval/
     ├── tfpp_run.py             Flash-Next: one GPU, or one rank of a pipeline (measurement harness)
     ├── compare.py              Flash-Next: token-by-token comparison of two runs
@@ -558,9 +559,9 @@ Details and the order of the hardware steps: [docs/roadmap.md](docs/roadmap.md).
 - tfpp builds on **TensorFold** (Apache-2.0; code before 0.6.0 was MIT), **MiaAI-Lab's GLM recipe patches**,
   **BertholomusAI's TensorFold fork** (Apache-2.0) and **ExLlamaV3**'s EXL3 format (MIT). llama.cpp / ggml (MIT) is
   used as a separate program over RPC, not copied. None of these trees ship here. Credits and licence texts are in
-  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). No AGPL code is added, imported or copied. (The MiniMax recipe
-  runs the pack author's AGPL-3.0 vllm-exl3 plugin from their own image, as a separate program you install; hive-ram
-  ships nothing that imports it.)
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). No AGPL source is copied. The one exception to Apache-2.0 is
+  [`tfpp/vllm_plugin/`](tfpp/vllm_plugin), licensed **AGPL-3.0-only** because it imports the MiniMax pack author's
+  AGPL-3.0 `vllm-exl3`.
 - **No model weights ship here.** Each checkpoint keeps its own licence: check the model card before you download
   and before any non-personal use. In particular, the optional DFlash2 drafter for GLM
   (`incoai/GLM-5.3-Flash-DFlash2`) is **CC BY-NC-ND 4.0: non-commercial use, no derivatives**. Do not redistribute it

@@ -18,14 +18,14 @@ or `.wslconfig` change on either host for the link.
 - 4-bit main KV cache, FP8 indexer KV, CUDA graphs for 1–6, 12, 18 and 24 rows
 - A cable-only IP link (`n1x_tun.py`) for vLLM's NCCL and Gloo, where only one machine accepts connections
 - Verified: 24/24 on programmatic tasks, a needle in a haystack at 96K tokens
-- Apache 2.0 recipe (the glue plugin is not part of it, see [below](#the-one-piece-that-is-not-here))
+- Apache 2.0 recipe; the small glue plugin that connects the kernels to vLLM is AGPL-3.0-only ([below](#the-glue-plugin))
 
 [Engine guide](../engines/minimax-vllm.md) · [Scripts](../../tfpp/scripts/minimax) · [Benchmarks](../benchmarks.md#minimax-m31-flash-with-vllm-pipeline-parallelism-2026-10-25) · [Hardware setup](../hardware-setup.md)
 
 ## Install with an AI agent
 
 Paste this into an AI coding agent that can run commands on both laptops (for example Claude Code or Codex). It reads the
-recipe, checks your machines, and stops at the step this repository cannot do for you.
+recipe, checks your machines, and asks before it changes any Windows setting.
 
 ```
 You are setting up a local AI model server on two NVIDIA N1X laptops joined by a USB4 cable. Serve MiniMax-M3.1-Flash
@@ -48,9 +48,9 @@ Work through these steps in order:
 4. Download the pack and the drafter on both machines at the pinned revisions in THIRD_PARTY.md, unpack the pinned vLLM
    image, build the TensorFold kernels with tfpp/scripts/minimax/prepare_tensorfold.sh, and start the link with
    n1x_tun.py.
-5. This repository does not contain the small vLLM glue plugin that calls the TensorFold kernels (it imports an AGPL-3.0
-   package). Stop here and ask me whether I have it or want to write it from the description in the engine guide. Without it the
-   server runs at about 10 tok/s and none of the numbers in the recipe apply.
+5. Install the glue plugin from tfpp/vllm_plugin into the vLLM image's Python (pip install --no-deps --no-build-isolation),
+   with TFMOE_ROOT pointing at the kernel directory from step 4. Tell me first that this folder is licensed AGPL-3.0-only
+   because it imports vllm-exl3. Without the plugin the server runs at about 10 tok/s and none of the numbers apply.
 6. Launch rank 1 on the machine that accepts connections, then rank 0 with the API, with the settings in the recipe's quick
    start. Follow the logs until ready_check.sh prints READY; loading takes 6 to 9 minutes. Drop the page cache only
    while loading.
@@ -184,6 +184,7 @@ fork commits, the pack revision, the drafter and the TensorFold tag.
 ```bash
 git clone https://github.com/ashhart/TensorFold ~/TensorFold && git -C ~/TensorFold checkout v0.6.6   # cb2ebf0
 bash tfpp/scripts/minimax/prepare_tensorfold.sh ~/TensorFold ~/n1x-cluster/tfx                          # on both machines
+pip install --no-deps --no-build-isolation tfpp/vllm_plugin                                              # into the image's Python, both machines
 python3 tfpp/scripts/minimax/n1x_tun.py server 5201 10.99.0.1/30                                        # the machine that accepts
 python3 tfpp/scripts/minimax/n1x_tun.py client 10.77.0.1:5201 10.99.0.2/30                              # the other one
 ```
@@ -228,7 +229,7 @@ nsenter --preserve-credentials -U -n -t $(cat ~/n1x-cluster/n1x_tun.pid) curl -s
 | Symptom | What to do |
 |---|---|
 | `ready_check.sh` prints `FAIL` | Read `m31-pp-<tag>-r0.log` and `-r1.log`. An out-of-memory on the 64 GB machine at 20 layers means the bf16 drafter does not fit: use `PP_SPLIT=42,18`. |
-| vLLM reports about 8 GiB free GPU memory and refuses to start | The `memory=` cap in `.wslconfig` is read as the GPU's free memory on an integrated GPU; the glue plugin's fix (see below) makes it use CUDA's figure. |
+| vLLM reports about 8 GiB free GPU memory and refuses to start | The `memory=` cap in `.wslconfig` is read as the GPU's free memory on an integrated GPU; the plugin's `register_fixes` makes vLLM use CUDA's figure. |
 | `get_unused_fd_flags failed` in `dmesg`, then the WSL VM hangs | Raise the open-file limit (`m31_serve.sh` does `ulimit -n`) and set `autoMemoryReclaim=disabled` in `.wslconfig`. We did not separate the two. |
 | Windows commit reaches 0 during the load and the WSL VM is shut down | Larger fixed page file, and stop the load below about 15–20 GB of free commit. |
 | Both ranks wait for each other and nothing loads | The link is down: `tail n1x_tun.log` on both machines; the relay on the accepting machine must be running. |
@@ -259,23 +260,24 @@ tokens each fit side by side. A request the pool cannot place yet waits.
 | `GMU` | 0.80 (set by `launch_rank.sh`) | `--gpu-memory-utilization` |
 | `UMA_ATS` | 0 | 0 keeps the embedding in CUDA memory; WSL has no ATS and an alias gives an illegal address |
 | `CG` | `FULL_DECODE_ONLY` | CUDA-graph mode |
-| `TFMOE` / `TFLIN` | 1 / 1 | Read only by the glue plugin (kernels for the experts and the linears) |
+| `TFMOE` / `TFLIN` | 1 / 1 | The glue plugin's switches (TensorFold kernels for the experts and the linears); `launch_rank.sh` sets both |
 
-## The one piece that is not here
+## The glue plugin
 
-The glue plugin that connects TensorFold's kernels to the pack author's `vllm-exl3` imports an AGPL-3.0 package, and this
-repository takes no AGPL code in any form. The engine guide says [what it does in four points](../engines/minimax-vllm.md#the-glue-plugin-is-not-in-this-repository),
-and the kernels' build script and patch are published, so it can be written again. **Every number above was measured with
-it; without it the same stack runs at about 10 tok/s plain and the drafter was not measured on those kernels.** A repository
-that carries only the recipe's own scripts is not a one-command install, and this page does not pretend it is.
+[`tfpp/vllm_plugin`](../../tfpp/vllm_plugin) connects TensorFold's kernels to the pack author's `vllm-exl3` (routed experts,
+dense linears) and fixes two things in vLLM and vllm-exl3 under pipeline parallelism on this hardware. It imports
+`vllm_exl3`, which is AGPL-3.0, so that folder is licensed **AGPL-3.0-only** with its own `LICENSE`, while the rest of this
+repository is Apache-2.0 and none of vllm-exl3's source is copied. [What it does, point by point](../engines/minimax-vllm.md#the-glue-plugin).
+**Every number above was measured with it; without it the same stack runs at about 10 tok/s plain.**
 
 ## Licences
 
 - **The recipe** (scripts, patch, docs): Apache License 2.0, as the rest of hive-ram. The patch modifies TensorFold v0.6.6
   (Apache-2.0).
+- **The glue plugin** (`tfpp/vllm_plugin`): **AGPL-3.0-only**, because it imports vllm-exl3.
 - **vLLM** and the image: Apache-2.0, run unmodified. By pulling or running the image you accept its base layers' terms.
-- **vllm-exl3** (the pack author's plugin inside that image): **AGPL-3.0**. You install and run it yourself; nothing here
-  imports it.
+- **vllm-exl3** (the pack author's plugin inside that image): **AGPL-3.0**. You pull and run it with the image; only the
+  glue plugin above imports it.
 - **The pack** (`vcruz305/MiniMax-M3.1-Flash-EXL3-SAGE-2.15bpw`) and **the base model** (MiniMax-M3.1-Flash): each keeps its
   own licence; read both model cards before use.
 - **The DFlash2 drafter** (`incoai/MiniMax-M3.1-Flash-DFlash2`): Apache-2.0 as stated on its model card. (The GLM-5.3-Flash

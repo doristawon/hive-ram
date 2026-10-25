@@ -11,8 +11,8 @@ This engine is different from the `tfpp` family. hive-ram does not wrap TensorFo
 | Piece | File | Why it exists |
 |---|---|---|
 | A TCP-only IP link between the nodes that changes nothing on either host | [`n1x_tun.py`](../../tfpp/scripts/minimax/n1x_tun.py) | vLLM's NCCL and Gloo need both machines to open connections to each other on random ports. Here only one machine accepts connections, through a userland relay, and the network configuration must stay as it is. |
-| TensorFold EXL3 kernels for vLLM | [`prepare_tensorfold.sh`](../../tfpp/scripts/minimax/prepare_tensorfold.sh) and [`patches/`](../../tfpp/scripts/minimax/patches) build them; the glue that calls them is **not in this repository** ([why](#the-glue-plugin-is-not-in-this-repository)) | On this machine the weights outside the GPU's small dedicated segment are read about 9× slower by ExLlamaV3's small-batch kernels than by TensorFold's. |
-| Two vLLM / vllm-exl3 fixes | described in [the glue section](#the-glue-plugin-is-not-in-this-repository) | The pipeline-stage expert offset, and the GPU free-memory rule on integrated GPUs. |
+| TensorFold EXL3 kernels inside vLLM | [`tfpp/vllm_plugin`](../../tfpp/vllm_plugin/README.md) (AGPL-3.0-only, [why](#the-glue-plugin)), [`prepare_tensorfold.sh`](../../tfpp/scripts/minimax/prepare_tensorfold.sh) and [`patches/`](../../tfpp/scripts/minimax/patches) | On this machine the weights outside the GPU's small dedicated segment are read about 9× slower by ExLlamaV3's small-batch kernels than by TensorFold's. |
+| Two vLLM / vllm-exl3 fixes | same plugin, `register_fixes` | The pipeline-stage expert offset, and the GPU free-memory rule on integrated GPUs. |
 | Launch, readiness and evaluation scripts | [`tfpp/scripts/minimax`](../../tfpp/scripts/minimax) | `m31_serve.sh`, `launch_rank.sh`, `ready_check.sh`, `eval/` (chat, verifiable tasks, needle-in-a-haystack) |
 
 ## Results
@@ -124,8 +124,9 @@ Steps (details and every flag in the scripts):
 ```bash
 # 0. Both nodes: the vLLM image unpacked into a folder and run with `unshare --user --map-root-user --mount` + chroot
 #    (no Docker needed); build the two forks into it as the recipe's Dockerfile does. Copy the pack and the drafter to both.
-# 1. Both nodes: the TensorFold kernels the glue plugin loads (the plugin itself you write or obtain; see its section below)
+# 1. Both nodes: kernels for the plugin, then the plugin
 bash tfpp/scripts/minimax/prepare_tensorfold.sh ~/TensorFold ~/n1x-cluster/tfx     # TensorFold at v0.6.6
+pip install --no-deps --no-build-isolation tfpp/vllm_plugin                        # into the image's Python (AGPL-3.0-only)
 # 2. Link: node 1 (the node behind relay_user.ps1, which accepts) first, then node 2
 python3 tfpp/scripts/minimax/n1x_tun.py server 5201 10.99.0.1/30                    # node 1
 python3 tfpp/scripts/minimax/n1x_tun.py client 10.77.0.1:5201 10.99.0.2/30         # node 2 (its pid file names the namespace)
@@ -146,8 +147,8 @@ These cost us hours; each is a hardware or Windows property of this class of mac
    App (System → Advanced → GPU Settings → GPU Memory Allocation, applied at restart) we set **Dedicated 44 GB** on the
    64 GB machine. The 128 GB machine ran with 8 GB.
 2. **A `.wslconfig` memory cap does not limit the GPU, but vLLM thinks it does.** On integrated GPUs vLLM replaces the
-   GPU's free memory by `psutil` available RAM; with `memory=12GB` it saw 8 GiB free and refused to start. Making
-   `current_platform.is_integrated_gpu()` return false makes it use CUDA's figure instead.
+   GPU's free memory by `psutil` available RAM; with `memory=12GB` it saw 8 GiB free and refused to start. The plugin's
+   `register_fixes` makes `current_platform.is_integrated_gpu()` return false, so vLLM uses CUDA's figure instead.
 3. **Drop the page cache only while loading.** Weights are mmapped from the pack; WSL's page cache counts as Windows
    commit and filled it to 0 during loads (the WSL VM was shut down once). A root `drop_caches` loop every 5 s fixes the
    load, but **costs about 35 ms per decoding step** if it keeps running: stop it once the API answers.
@@ -184,25 +185,24 @@ These cost us hours; each is a hardware or Windows property of this class of mac
   which on this hardware was about 10 tok/s without a draft; we did not measure the drafter on those kernels.
 - The vllm-exl3 plugin and the pack are the pack author's work (AGPL-3.0 plugin); nothing of theirs is copied here.
 
-## The glue plugin is not in this repository
+## The glue plugin
 
-Our small vLLM plugin (about 230 lines, three entry points) imports `vllm_exl3.exl3`, and vllm-exl3 is licensed
-AGPL-3.0. This repository takes no AGPL code in any form, including code that imports it ([`CONTRIBUTING.md`](../../CONTRIBUTING.md#third-party-code-and-models)),
-so the plugin stays out. What is published is everything around it: the kernels' build script and patch, the launch and
-evaluation scripts, the link, the settings, and every measurement. What the plugin does, so you can write your own:
+[`tfpp/vllm_plugin`](../../tfpp/vllm_plugin) (about 230 lines, three entry points) imports `vllm_exl3.exl3`, and vllm-exl3
+is licensed AGPL-3.0. That folder, and only that folder, is therefore licensed **AGPL-3.0-only** with its own `LICENSE`;
+the rest of hive-ram stays Apache-2.0, and nothing of vllm-exl3's source is copied
+([`CONTRIBUTING.md`](../../CONTRIBUTING.md#third-party-code-and-models)). What it does:
 
 1. **Experts** (`TFMOE=1`). After vllm-exl3 builds a routed layer's experts, attach a TensorFold expert table that
    reads the same trellis tensors in place (no second copy of the weights). For decode-sized calls (up to 16 rows) call
    TensorFold's grouped EXL3 expert kernel; padded ids of `-1` (CUDA-graph filler) are skipped; larger calls and layers
-   without a gate keep vllm-exl3's path. Apply the clamped SwiGLU-OAI activation in the epilogue
+   without a gate keep vllm-exl3's path. The clamped SwiGLU-OAI activation comes from the epilogue patch
    (`patches/0001-exl3-experts-swiglu-oai.patch`).
 2. **Dense linears** (`TFLIN=1`). Route vllm-exl3's dense EXL3 forward for 1–128 rows through TensorFold's
    `linear.cu` on the trellis in place.
 3. **Pipeline fix.** vllm-exl3 `41fdb7d` takes a routed layer's checkpoint expert offset from `get_ep_group().rank`,
-   the global rank, which is wrong on pipeline stage 1. Use `rank_in_group * num_experts`.
-4. **GPU memory.** `is_integrated_gpu` false, as above.
+   the global rank, which is wrong on pipeline stage 1. The plugin uses `rank_in_group * num_experts`.
+4. **GPU memory.** `is_integrated_gpu` returns false, as above (`N1X_UMA_FREE=psutil` keeps the stock rule).
 
-Checked against the original path: cosine similarity ≥ 0.999994 for the MoE and ≥ 0.99997 for the linears. The
-`TFMOE=1 TFLIN=1` settings in `launch_rank.sh` are read only by that plugin and do nothing without it. If you would
-rather have the plugin in this repository, that needs a decision to relax the AGPL rule in `CONTRIBUTING.md`; it has
-not been taken.
+Checked against the original path: cosine similarity ≥ 0.999994 for the MoE and ≥ 0.99997 for the linears
+(`TFMOE_CHECK=N`, `TFLIN_CHECK=N` repeat the comparison on your hardware). The `TFMOE=1 TFLIN=1` settings in
+`launch_rank.sh` are read only by this plugin. If you offer a modified plugin over a network, AGPL section 13 applies.

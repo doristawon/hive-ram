@@ -18,4 +18,4 @@ cp "$HERE/tensorfold_build_shim.py" "$DEST/tensorfold/cuda/build.py"
 ( cd "$DEST" && mkdir -p _p/src/tensorfold/cuda && cp -r tensorfold/cuda/exl3 _p/src/tensorfold/cuda/ && cd _p && patch -p1 < "$HERE/patches/0001-exl3-experts-swiglu-oai.patch" \
   && cp src/tensorfold/cuda/exl3/experts.cu src/tensorfold/cuda/exl3/experts.py "$DEST/tensorfold/cuda/exl3/" ) && rm -rf "$DEST/_p"
 cp "$SRC/LICENSE" "$DEST/LICENSE.tensorfold"
-echo "ready: export TFMOE_ROOT=$DEST ; the glue plugin that loads it is not part of this repository (docs/engines/minimax-vllm.md)"
+echo "ready: export TFMOE_ROOT=$DEST ; then pip install the plugin (tfpp/vllm_plugin) into vLLM's Python"

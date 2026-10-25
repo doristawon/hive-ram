@@ -162,7 +162,7 @@ do not add that kit, or anything else AGPL, to a tfpp venv.
 | Drafter | `incoai/MiniMax-M3.1-Flash-DFlash2` |
 | TensorFold | tag `v0.6.6`, `cb2ebf0540f42604e2759b2ddef497861e928248` (`prepare_tensorfold.sh` refuses any other commit) |
 
-hive-ram adds no AGPL code to any of this: do not put `vllm-exl3` into a tfpp venv, and do not add a file that imports it.
+`vllm-exl3` belongs only in the MiniMax vLLM environment: keep it out of every tfpp venv, and nothing outside `tfpp/vllm_plugin/` may import it.
 
 ## 5. llama.cpp (baseline only)
 

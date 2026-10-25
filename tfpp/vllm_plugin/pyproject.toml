@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "n1x-tfmoe"
+version = "0.1.0"
+description = "vLLM general plugins: TensorFold EXL3 kernels for MiniMax-M3 routed experts and linears, and fixes for vllm-exl3 under pipeline parallelism on WSL2 N1X"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+
+[project.entry-points."vllm.general_plugins"]
+n1x_tfmoe = "n1x_tfmoe:register"
+n1x_tflin = "n1x_tfmoe:register_linear"
+n1x_fixes = "n1x_tfmoe:register_fixes"
+
+[tool.setuptools]
+py-modules = ["n1x_tfmoe"]
