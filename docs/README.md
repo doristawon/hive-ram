@@ -16,6 +16,8 @@ Paths in these pages are relative to the repository root unless a page says othe
 | Run the TensorFold pipeline that is verified on hardware | [engines/tfpp-flashnext.md](engines/tfpp-flashnext.md) |
 | Run or test GLM-5.3-Flash across machines | [engines/tfpp-glm.md](engines/tfpp-glm.md) |
 | Bring up DeepSeek-V4.1-Flash (never run on a GPU yet) | [engines/tfpp-ds41.md](engines/tfpp-ds41.md) |
+| Serve MiniMax-M3.1-Flash (108.6 GiB) across two machines with vLLM | [engines/minimax-vllm.md](engines/minimax-vllm.md) |
+| Follow the one-page recipe for MiniMax-M3.1-Flash (the measured default: 128K window, 4 streams) | [recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md](recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md) |
 | Understand why a pipeline and how a round works | [architecture.md](architecture.md) |
 | Fix something that broke | [troubleshooting.md](troubleshooting.md) |
 
@@ -39,6 +41,8 @@ across machines).
 | [engines/tfpp-flashnext.md](engines/tfpp-flashnext.md) | `tfpp` for Qwen3.8-Flash-Next on TensorFold 0.6.1: setup, two nodes, more ranks, options, reading the output, KeepWarm, results | **Verified on hardware**: 2-machine split token-identical to one node and as fast (KeepWarm); 3-rank chain on 2 machines |
 | [engines/tfpp-glm.md](engines/tfpp-glm.md) | `tfpp-glm` for GLM-5.3-Flash on the MIA-patched TensorFold v0.6.0: install, weights and the optional (non-commercial) DFlash2 drafter, layer sizes and cuts, wiring three nodes, `cluster.env` / `node.env`, start / use / stop, the one-GPU and two-machine tests, v2, diagnostics | **v1 verified on hardware on a truncated model** (8 layers bit-exact, 26 layers across machines bit-identical at two cuts, HTTP answered). Full 45-layer model **not run** (does not fit 128 + 64 GB). v2 (`PARALLEL` 2–8) **not run on hardware** |
 | [engines/tfpp-ds41.md](engines/tfpp-ds41.md) | `tfpp-ds41` for DeepSeek-V4.1-Flash on the BertholomusAI TensorFold fork: toolchain, the 11-layer test model, the test ladder, two-node blocks | **Not run on hardware**: static review and CPU tests only |
+| [engines/minimax-vllm.md](engines/minimax-vllm.md) | MiniMax-M3.1-Flash on vLLM pipeline parallelism over a cable-only link: `n1x_tun.py`, the TensorFold kernel build and patch, the DFlash2 drafter, settings that mattered, results, quality checks, dead ends | **Verified on hardware** (full model, two nodes) |
+| [recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md](recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md) | The same engine as a recipe page: what it needs, the measured numbers, the quick start, the settings, the licences, and a prompt for an AI coding agent. |
 
 ## Design and protocol
 

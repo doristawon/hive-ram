@@ -151,7 +151,20 @@ Set `TFPP_DS41_TF_ROOT=$HOME/tf-dsv41/src` in that node's `node.env`, create the
 The fork itself was written clean-room with respect to an AGPL-3.0 vLLM kit (see its `tools/dsv41/ATTRIBUTION.md`);
 do not add that kit, or anything else AGPL, to a tfpp venv.
 
-## 4. llama.cpp (baseline only)
+## 4. MiniMax-M3.1-Flash on vLLM (docs/engines/minimax-vllm.md)
+
+| Item | Pin |
+|---|---|
+| vLLM engine image | `vllm/vllm-openai:minimax-m31-flash`, `sha256:86f582dae25ea92802353727164ae4eb03b37b18baf9119b805ffaec2a7ef07c` (linux/arm64) |
+| ExLlamaV3 fork (inside the recipe's image build) | `vcruz305/exllamav3`, branch `feat/moe-act3-batched`, `fdd77361971144e8d175e09e7b50b7100739fd95` |
+| vllm-exl3 (inside the recipe's image build, AGPL-3.0) | `vcruz305/vllm-exl3`, branch `feat/minimax-q4-prefill`, `41fdb7d99a441d37938c2a1bd600ac963c18a3cb` |
+| Pack | `vcruz305/MiniMax-M3.1-Flash-EXL3-SAGE-2.15bpw`, revision `99bf3a57af5d07245ea9abb5426e7dce6af6356b` |
+| Drafter | `incoai/MiniMax-M3.1-Flash-DFlash2` |
+| TensorFold | tag `v0.6.6`, `cb2ebf0540f42604e2759b2ddef497861e928248` (`prepare_tensorfold.sh` refuses any other commit) |
+
+hive-ram adds no AGPL code to any of this: do not put `vllm-exl3` into a tfpp venv, and do not add a file that imports it.
+
+## 5. llama.cpp (baseline only)
 
 The llama.cpp RPC measurements used upstream llama.cpp at commit `9febe63`, built with CUDA 13.1 for `sm_121` and
 `GGML_RPC=ON`. Build steps: [`docs/engines/llamacpp-rpc.md`](docs/engines/llamacpp-rpc.md). Only the short hash was

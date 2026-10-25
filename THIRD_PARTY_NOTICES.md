@@ -14,9 +14,13 @@ source. This file lists what comes from where and under which licence.
 | [BertholomusAI's TensorFold fork](https://github.com/bertholomus/TensorFold) (`deepseek-v41-tp2`) | Engine of tfpp-ds41 (`tfpp/tfpp/ds41/`); adapted functions | Apache-2.0 | No (adapted code only) |
 | [ExLlamaV3](https://github.com/turboderp-org/exllamav3) | Its EXL3 weight format, read by the engines above | MIT | No |
 | [llama.cpp / ggml](https://github.com/ggml-org/llama.cpp) | Separate program for the llama.cpp RPC baseline | MIT | No |
+| [vLLM](https://github.com/vllm-project/vllm), image `vllm/vllm-openai:minimax-m31-flash` | The MiniMax recipe runs it as a separate program, unmodified, from the image you pull | Apache-2.0 | No |
+| [vllm-exl3 and exllamav3 forks](https://github.com/vcruz305/vllm-exl3) (`vcruz305`), inside that image | Run as a separate program by vLLM; hive-ram has no code that imports them | vllm-exl3: **AGPL-3.0**; exllamav3: MIT | **No** |
 | Model weights and drafters | Loaded at run time from folders you download | Each checkpoint's own (see [Models](#models)) | No |
 
-Nothing licensed under the AGPL is used, imported or included.
+No AGPL code is added, imported or copied into this repository. The only AGPL-3.0 software the documentation involves is the
+`vllm-exl3` plugin that the MiniMax pack's author ships inside their vLLM image; you pull and run it yourself, and no file here imports it.
+
 
 ## TensorFold
 
@@ -82,6 +86,21 @@ changes; its `tools/dsv41/ATTRIBUTION.md` lists every outside source. In short:
 - A vLLM kit licensed AGPL-3.0 was only run as a black box over HTTP to measure baseline numbers; none of its code was
   read or included. Nothing of it is in the fork or in hive-ram.
 
+## MiniMax recipe: vLLM, the pack and its drafter
+
+- **vLLM**, <https://github.com/vllm-project/vllm>, Apache-2.0. The recipe runs the `vllm/vllm-openai:minimax-m31-flash` image
+  (digest in [`THIRD_PARTY.md`](THIRD_PARTY.md)) without modifying it.
+- **The pack and its plugin**, by `vcruz305`: `MiniMax-M3.1-Flash-EXL3-SAGE-2.15bpw` (the weights) and `vllm-exl3` (the vLLM
+  plugin that reads them, AGPL-3.0). hive-ram neither copies nor imports either; the recipe's glue plugin is kept out of this
+  repository for that reason ([why](docs/engines/minimax-vllm.md#the-glue-plugin-is-not-in-this-repository)).
+- **TensorFold v0.6.6**, <https://github.com/ashhart/TensorFold>, Apache-2.0. `tfpp/scripts/minimax/prepare_tensorfold.sh` copies
+  twelve of its `cuda/exl3` files out of your own checkout at the pinned tag and applies
+  `tfpp/scripts/minimax/patches/0001-exl3-experts-swiglu-oai.patch` (50 lines, a modification of `experts.cu` and
+  `experts.py`, Apache-2.0 section 4(b)); the copy is built on your machine and is not part of this repository.
+- **The DFlash2 drafter**, `incoai/MiniMax-M3.1-Flash-DFlash2` by Inco AI, Apache-2.0 as stated on its model card. Not included.
+- **tonyd2wild's benchmark harness**, <https://github.com/tonyd2wild/MiniMax-M3.1-Flash-EXL3-TP2-2x-DGX-Spark>, MIT. It produced the
+  tables and is not copied here. The recipe's settings were compared with that repository's and with the pack author's.
+
 ## ExLlamaV3
 
 <https://github.com/turboderp-org/exllamav3>, MIT License, Copyright (c) 2025 Turboderp. The GLM-5.3-Flash and
@@ -112,6 +131,8 @@ download, and again before any use that is not personal.** What the sources we h
 
 | Checkpoint | Used by | Licence as stated, and where |
 |---|---|---|
+| `vcruz305/MiniMax-M3.1-Flash-EXL3-SAGE-2.15bpw` (revision `99bf3a57`) | MiniMax recipe weights | Not stated in any source we have for the pack itself; the base model is MiniMax's. Check both model cards |
+| `incoai/MiniMax-M3.1-Flash-DFlash2` | MiniMax recipe drafter, optional | Apache-2.0 as stated on the model card (verify it before use) |
 | `incoai/GLM-5.3-Flash-DFlash2` (revision `bf582e4e`) | tfpp-glm drafter, **optional** | **CC BY-NC-ND 4.0: non-commercial use only, no derivatives** (TensorFold's third-party notices; the MIA recipe's NOTICE). Do not redistribute it or any converted or quantized copy. Without it: `NO_DRAFTS=1`, or MTP-only drafting at `PARALLEL=1` (MIA reports it as about 5-10% slower; not run on hardware by us) |
 | `Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold` | tfpp-glm weights | The MIA recipe's NOTICE states Apache-2.0, derived from `zai-org/GLM-5.3-Flash` (MIT per the same NOTICE). Check both model cards |
 | `deepseek-ai/DeepSeek-V4.1-Flash` | Origin of the DeepSeek weights | MIT, per the fork's ATTRIBUTION.md |

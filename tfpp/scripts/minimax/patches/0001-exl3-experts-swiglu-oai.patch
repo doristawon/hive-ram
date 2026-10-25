@@ -1,0 +1,50 @@
+diff --git a/src/tensorfold/cuda/exl3/experts.cu b/src/tensorfold/cuda/exl3/experts.cu
+--- a/src/tensorfold/cuda/exl3/experts.cu	2026-10-25 23:10:08.770412200 +0800
++++ b/src/tensorfold/cuda/exl3/experts.cu	2026-10-25 23:10:08.850882500 +0800
+@@ -112,7 +112,7 @@
+ 
+ __device__ __forceinline__ float bf16r(float x) { return __bfloat162float(__float2bfloat16_rn(x)); }
+ 
+-// Program (member row, 128-block of the width): splits summed in order, rotated, * svh, SwiGLU (0: GLM's bf16 roundings, 1: fp32), then Xd = fp16((act * suh_d) @ H).
++// Program (member row, 128-block of the width): splits summed in order, rotated, * svh, SwiGLU (0: GLM's bf16 roundings, 1: fp32, 2: clamped SwiGLU-OAI), then Xd = fp16((act * suh_d) @ H).
+ __global__ void gateup_epilogue_kernel(const float* __restrict__ Z, const int* __restrict__ pick,
+                                        const half* __restrict__ svh_g, const half* __restrict__ svh_u,
+                                        const half* __restrict__ suh_d, half* __restrict__ xd, int P, int N, int SK,
+@@ -144,6 +144,16 @@
+             float uu = fminf(fmaxf(bf16r(uv[j] * HAD_SCALE * __half2float(svh_u[(size_t)e * N + n + j])), -limit),
+                              limit);
+             act = bf16r(bf16r(gg / (1.f + expf(-gg))) * uu);
++        } else if (act_mode == 2) {
++            // clamped SwiGLU-OAI (gpt-oss / MiniMax-M3), ExLlamaV3's act_oai_swiglu: gate clamped from above, up
++            // symmetrically (limit 0 = no clamp), alpha 1.702 inside the sigmoid and +1 on the up path
++            float gg = gv[j] * HAD_SCALE * __half2float(svh_g[(size_t)e * N + n + j]);
++            float uu = uv[j] * HAD_SCALE * __half2float(svh_u[(size_t)e * N + n + j]);
++            if (limit != 0.f) {
++                gg = fminf(gg, limit);
++                uu = fminf(fmaxf(uu, -limit), limit);
++            }
++            act = (uu + 1.f) * (gg * (1.f / (1.f + __expf(-1.702f * gg))));
+         } else {
+             float gg = fminf(gv[j] * HAD_SCALE * __half2float(svh_g[(size_t)e * N + n + j]), limit);
+             float uu = fminf(fmaxf(uv[j] * HAD_SCALE * __half2float(svh_u[(size_t)e * N + n + j]), -limit), limit);
+diff --git a/src/tensorfold/cuda/exl3/experts.py b/src/tensorfold/cuda/exl3/experts.py
+--- a/src/tensorfold/cuda/exl3/experts.py	2026-10-25 23:10:08.889391800 +0800
++++ b/src/tensorfold/cuda/exl3/experts.py	2026-10-25 23:10:08.916391800 +0800
+@@ -11,7 +11,7 @@
+ import torch
+ 
+ CB_3INST, CB_MCG, CB_MUL1 = 0, 1, 2
+-ACT_BF16, ACT_F32 = 0, 1          # SwiGLU with the GLM family's bf16 roundings / in fp32
++ACT_BF16, ACT_F32, ACT_OAI = 0, 1, 2   # SwiGLU with the GLM family's bf16 roundings / in fp32 / clamped SwiGLU-OAI
+ # Half-bits a value: 1..8 bits (2, 4, .. 16) and every half-integer rate 1.5..7.5 (3, 5, .. 15).
+ K2_SUPPORTED = tuple(range(2, 17))
+ 
+@@ -26,7 +26,7 @@
+ 
+     here = Path(__file__).parent
+     srcs = [str(here / f) for f in ("experts.cpp", "experts.cu", "experts_cb0.cu", "experts_cb1.cu", "experts_cb2.cu")]
+-    return load(name="tensorfold_exl3_experts_v1", sources=srcs, extra_cuda_cflags=["-O3", "-lineinfo"],
++    return load(name="tensorfold_exl3_experts_oai_v2", sources=srcs, extra_cuda_cflags=["-O3", "-lineinfo"],
+                 verbose=False)
+ 
+ 

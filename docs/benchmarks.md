@@ -11,6 +11,7 @@ documents quote. Each section says what is **measured**, what is an **estimate**
 - [Qwen3.8-Flash-Next on TensorFold and tfpp](#qwen38-flash-next-on-tensorfold-and-tfpp)
 - [Qwen3.8-Flash-Next on llama.cpp](#qwen38-flash-next-on-llamacpp)
 - [GLM-5.3-Flash with tfpp-glm v1](#glm-53-flash-with-tfpp-glm-v1)
+- [MiniMax-M3.1-Flash with vLLM pipeline parallelism](#minimax-m31-flash-with-vllm-pipeline-parallelism-2026-10-25)
 - [Prompt processing (prefill)](#prompt-processing-prefill)
 - [Projections (not measured)](#projections-not-measured)
 - [Comparison: dual DGX Spark, tensor parallel over RoCE](#comparison-dual-dgx-spark-tensor-parallel-over-roce)
@@ -179,6 +180,40 @@ Round time across machines, tracing off:
 Memory of the 26-layer stages (measured): stage 0 on the 128 GB node, `[0,19)` 57.3 GiB or `[0,20)` 60.8 GiB; the
 leader on the 64 GB node (`[19,26)` or `[20,26)` plus head and DFlash2) 26.5 GiB, with 10.4 GiB of its budget still
 free.
+
+## MiniMax-M3.1-Flash with vLLM pipeline parallelism (2026-10-25)
+
+Complete 60-layer model, SAGE-EXL3 2.15 bpw, vLLM `minimax-m31-flash` image, layers 0–41 on the 128 GB machine and
+42–59 on the 64 GB machine, through `n1x_tun.py` (4.8 Gbit/s, 0.55 ms median round trip). Single stream, temperature 0,
+8,192-token context, KV 400 MB per rank, tonyd2wild's `bench_tp2_night.py` (one repetition). Decode tok/s:
+
+| Prompt type | No draft | DSpark k=3 | DFlash2 k=3 | DFlash2 k=5 | DFlash2 k=7 |
+|---|---:|---:|---:|---:|---:|
+| count 1…N | 17.8 | 19.2 | 36.6 | 47.4 | 57.4 |
+| tool call | 17.8 | 16.1 | 34.2 | 41.5 | 47.1 |
+| JSON | 17.8 | 15.2 | 30.9 | 33.1 | 36.3 |
+| code | 17.8 | 13.9 | 27.1 | 30.8 | 31.1 |
+| math | 17.8 | 14.1 | 29.0 | 33.4 | 31.0 |
+| prose | 17.8 | 9.0 | 19.8 | 18.1 | 16.2 |
+
+Other numbers: prefill about 400 tok/s; verification step 58 ms (no draft), about 100 ms (DFlash2), about 200 ms
+(DSpark). One layer costs about 0.87 ms on the 128 GB machine. Without the TensorFold kernels the same pair reaches
+10 tok/s. The same split with a stray page-cache-dropping loop left running reached 10–12 tok/s. Full discussion:
+[engines/minimax-vllm.md](engines/minimax-vllm.md).
+
+**131,072-token window, 4 streams (2026-10-26).** `--max-model-len 131072 --max-num-seqs 4`, 4.5 GB of KV per rank
+(pool 152,064 tokens), DFlash2 k=5, 42/18. Total decode tok/s over all streams (per stream in brackets), 2 rounds:
+
+| Streams | No draft (40/20) | DFlash2 k=5 (42/18) |
+|---:|---:|---:|
+| 1 | 17.4 (17.8) | 31.1 (33.0) |
+| 2 | 15.9 (10.8) | 35.8 (26.2) |
+| 3 | 21.4 (8.7) | 30.1 (14.0) |
+| 4 | 28.0 (8.4) | 24.8 (9.1) |
+
+Prefill: 8K and 32K prompts about 345 tok/s; a 96K-token prompt 217 tok/s on this 4-stream server (443 s to the first
+token) and 308 tok/s on a 1-stream server (316 s). Needle in a haystack (three codes at 10 %, 50 %, 90 %): 8K, 32K and
+96K tokens, all three codes returned each time, with and without the drafter.
 
 ## Prompt processing (prefill)
 

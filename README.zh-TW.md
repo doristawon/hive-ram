@@ -189,6 +189,7 @@ Flash-Next 的一個教訓：它的逐層 token 嵌入查表（PLE）在 Q4 檔�
 | `tfpp-glm` 完整模型 | GLM-5.3-Flash 全部 45 層 | 同上 | **尚未執行。** 完整 45 層模型的各段合計約需 160 GiB，128＋64 GB **放不下**，需要第三台（規劃中的鏈：128 GB → 64 GB → 128 GB）。 |
 | `tfpp-glm` v2（`PARALLEL` 2–8） | 同上，多路 | 同上 | **尚未在硬體上執行。** 已寫好並做過靜態審查，只有 CPU 測試。 |
 | `tfpp-ds41` | DeepSeek-V4.1-Flash-1017，EXL3 EAQ 2.9 bpw | BertholomusAI 的 TensorFold fork（`deepseek-v41-tp2`） | **尚未在硬體上執行。** 只做過靜態審查，加上它自己的 CPU 測試（都通過）；沒有在任何 GPU 上跑過。 |
+| vLLM PP=2＋TensorFold kernel | MiniMax-M3.1-Flash，完整 60 層，EXL3 SAGE 2.15 bpw（108.6 GiB） | vLLM `minimax-m31-flash` image＋vllm-exl3（pack 作者的，AGPL-3.0）＋TensorFold v0.6.6 kernel | **已在硬體上驗證（2026-10-26）**：兩台機器、完整模型：不開草稿 17.8 tok/s；開 DFlash2 草稿器時，131,072 token 視窗下單路 14–44 tok/s（結構化文字最快）、1–3 路合計 31–36 tok/s；24/24 道可驗證題；96K token 的 needle 測試通過。呼叫 kernel 的膠水外掛因 AGPL 不公開，所以單靠本 repo 無法重現這些數字。詳見 [配方](docs/recipes/MiniMax-M3.1-Flash-SAGE-EXL3-2x-N1X-vLLM.md)。 |
 
 ¹ 硬體實測用的是第一版、沒有版本號的傳輸協定。程式之後改成 `tfpp-flashnext/2` 協定（連線握手、啟動時檢查
 整條鏈、檢查每個 frame、錯誤 frame），這一版通過 CPU 測試，但還沒有重新上機。
@@ -519,7 +520,7 @@ hive-ram/
 - tfpp 建立在 **TensorFold**（Apache-2.0；0.6.0 之前的程式碼為 MIT）、**MiaAI-Lab 的 GLM 配方 patch**、
   **BertholomusAI 的 TensorFold fork**（Apache-2.0）和 **ExLlamaV3** 的 EXL3 格式（MIT）之上。llama.cpp／ggml
   （MIT）是透過 RPC 當作獨立程式使用，沒有複製進來。這些程式樹都不隨本 repo 發布。致謝與授權全文見
-  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。沒有使用或 import 任何 AGPL 的東西。
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。本 repo 沒有新增、import 或複製任何 AGPL 程式碼（MiniMax 配方會執行該 pack 作者 image 裡的 AGPL-3.0 vllm-exl3 外掛，那是你自己安裝的獨立程式，hive-ram 不含任何 import 它的程式）。
 - **本 repo 不包含任何模型權重。** 每個 checkpoint 各有自己的授權：下載前、以及任何非個人用途之前，請先看模型卡。
   特別是 GLM 可選的 DFlash2 草稿器（`incoai/GLM-5.3-Flash-DFlash2`）採 **CC BY-NC-ND 4.0：限非商業使用、禁止
   改作**。請勿再散布它或它的轉換版本。不用它的方法：設 `NO_DRAFTS=1`；或在 `PARALLEL=1` 時用 checkpoint 自帶的
